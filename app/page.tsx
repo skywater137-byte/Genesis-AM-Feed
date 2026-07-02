@@ -13,9 +13,6 @@ import { erc20Abi } from "viem"
 
 export default function Page() {
   const { isConnected, address } = useAccount()
-  
-  // DEBUG LOG: This will print every time your wallet status changes
-  console.log("Wallet Status Debug:", { isConnected, address });
 
   const TOKEN_CONTRACT = '0x85d809585BFE271c73a9AAEfeCF0be1204FDB2fd'
   
@@ -23,7 +20,7 @@ export default function Page() {
     address: TOKEN_CONTRACT as `0x${string}`,
     abi: erc20Abi,
     functionName: 'balanceOf',
-    args: [address as `0x${string}`],
+    args: address ? [address as `0x${string}`] : undefined,
     query: { enabled: isConnected }
   })
 
@@ -35,15 +32,12 @@ export default function Page() {
   const [userPosts, setUserPosts] = useState<Post[]>([])
   const [feed, setFeed] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
-  const [isLive, setIsLive] = useState(false)
 
-  // Load from LocalStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("user-posts")
     if (saved) setUserPosts(JSON.parse(saved))
   }, [])
 
-  // Persist to LocalStorage when userPosts change
   useEffect(() => {
     localStorage.setItem("user-posts", JSON.stringify(userPosts))
   }, [userPosts])
@@ -53,10 +47,9 @@ export default function Page() {
     async function loadFeed() {
       try {
         const res = await fetch("/api/feed")
-        const data = (await res.json()) as { posts: Post[]; live?: boolean }
+        const data = (await res.json()) as { posts: Post[] }
         if (!active) return
         setFeed(data.posts ?? [])
-        setIsLive(Boolean(data.live))
       } catch {
         if (active) setFeed([])
       } finally {
@@ -89,18 +82,13 @@ export default function Page() {
 
   const posts = useMemo(() => {
     let list = [...feed]
-
     if (liveHoldersOnly && address) {
       list = list.filter((p) => p.address.toLowerCase() === address.toLowerCase())
     }
-
     if (query.trim()) {
       const q = query.toLowerCase()
-      list = list.filter(
-        (p) => p.body.toLowerCase().includes(q) || p.handle.toLowerCase().includes(q)
-      )
+      list = list.filter((p) => p.body.toLowerCase().includes(q) || p.handle.toLowerCase().includes(q))
     }
-    
     list.sort((a, b) => sort === "weighted" ? b.weight - a.weight : b.createdAt - a.createdAt)
     return list
   }, [feed, query, sort, liveHoldersOnly, address])
@@ -125,13 +113,16 @@ export default function Page() {
           <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
             <Loader2 className="size-6 animate-spin text-muted-foreground" />
           </div>
-        ) : (
+        ) : hasToken ? (
           <ul>
             {userPosts.map((post) => <li key={post.id}><PostCard post={post} /></li>)}
-            {posts.map((post) => (
-              <li key={post.id}><PostCard post={post} /></li>
-            ))}
+            {posts.map((post) => <li key={post.id}><PostCard post={post} /></li>)}
           </ul>
+        ) : (
+          <div className="px-4 py-16 text-center text-muted-foreground">
+            <h2 className="text-xl font-bold mb-2">Access Restricted</h2>
+            <p>You must hold at least 5 GENTEST tokens to view the Genesis feed.</p>
+          </div>
         )}
       </main>
     </div>

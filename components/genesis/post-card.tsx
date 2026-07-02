@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowBigDown, ArrowBigUp, Repeat2 } from "lucide-react"
+import { ArrowBigDown, ArrowBigUp, Repeat2, MessageCircle } from "lucide-react"
 import type { Post } from "@/lib/posts"
 import { Avatar } from "./avatar"
 import { ChainDot } from "./chain-badge"
@@ -22,7 +22,6 @@ export function PostCard({ post }: { post: Post }) {
   const down = post.downvotes + (vote === "down" ? 1 : 0)
   const recasts = post.recasts + (recast ? 1 : 0)
 
-  // LOGIC: Check address match OR trust the post's inherent tier
   const isVerifiedHolder = post.address?.toLowerCase().trim() === KNOWN_HOLDER_ADDRESS.trim();
   const displayTier = (isVerifiedHolder || post.tier === "holder") ? "holder" : post.tier;
 
@@ -36,45 +35,30 @@ export function PostCard({ post }: { post: Post }) {
             <span className="truncate font-semibold text-foreground">{post.handle}</span>
             <ChainDot chain={post.chain} />
             <span className="font-mono text-xs text-muted-foreground">{post.address}</span>
-            <span className="text-muted-foreground">·</span>
-            <time className="text-xs text-muted-foreground">{post.timestamp}</time>
             
-            <span className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <button className="text-xs text-primary font-bold hover:underline">Follow</button>
               <TierBadge tier={displayTier} />
-            </span>
+            </div>
           </div>
 
-          <p className="mt-2 text-[15px] leading-relaxed text-foreground/90 text-pretty">
-            {post.body}
-          </p>
+          <p className="mt-2 text-[15px] leading-relaxed text-foreground/90">{post.body}</p>
 
-          {/* Interaction toolbar */}
           <div className="mt-3 flex items-center gap-1 text-muted-foreground">
-            <button
-              type="button"
-              onClick={() => setVote(vote === "up" ? null : "up")}
-              className={`group flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm transition-colors hover:bg-emerald-400/10 hover:text-emerald-300 ${vote === "up" ? "text-emerald-300" : ""}`}
-            >
+            <button onClick={() => setVote(vote === "up" ? null : "up")} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm hover:text-emerald-300">
               <ArrowBigUp className="size-[18px]" fill={vote === "up" ? "currentColor" : "none"} />
-              <span className="tabular-nums">{formatCount(up)}</span>
+              {formatCount(up)}
             </button>
-
-            <button
-              type="button"
-              onClick={() => setVote(vote === "down" ? null : "down")}
-              className={`group flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm transition-colors hover:bg-destructive/10 hover:text-destructive ${vote === "down" ? "text-destructive" : ""}`}
-            >
+            <button onClick={() => setVote(vote === "down" ? null : "down")} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm hover:text-destructive">
               <ArrowBigDown className="size-[18px]" fill={vote === "down" ? "currentColor" : "none"} />
-              <span className="tabular-nums">{formatCount(down)}</span>
+              {formatCount(down)}
             </button>
-
-            <button
-              type="button"
-              onClick={() => setRecast((r) => !r)}
-              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm transition-colors hover:bg-primary/10 hover:text-primary ${recast ? "text-primary" : ""}`}
-            >
+            <button onClick={() => setRecast((r) => !r)} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm hover:text-primary">
               <Repeat2 className="size-[18px]" />
-              <span className="tabular-nums">{formatCount(recasts)}</span>
+              {formatCount(recasts)}
+            </button>
+            <button onClick={() => alert("Comment feature active")} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm hover:text-blue-300">
+              <MessageCircle className="size-[18px]" />
             </button>
           </div>
         </div>
