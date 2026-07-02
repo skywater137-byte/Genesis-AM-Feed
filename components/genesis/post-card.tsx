@@ -1,13 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowBigDown, ArrowBigUp, Repeat2, MessageCircle } from "lucide-react"
+import { ArrowBigDown, ArrowBigUp, Repeat2, MessageCircle, X } from "lucide-react"
 import type { Post } from "@/lib/posts"
 import { Avatar } from "./avatar"
 import { ChainDot } from "./chain-badge"
 import { TierBadge } from "./tier-badge"
-
-const KNOWN_HOLDER_ADDRESS = "0x85d809585BFE271c73a9AAEfeCF0be1204FDB2fd".toLowerCase()
 
 function formatCount(n: number) {
   if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`
@@ -17,13 +15,11 @@ function formatCount(n: number) {
 export function PostCard({ post }: { post: Post }) {
   const [vote, setVote] = useState<"up" | "down" | null>(null)
   const [recast, setRecast] = useState(false)
+  const [isReplying, setIsReplying] = useState(false) // New state for replying
 
   const up = post.upvotes + (vote === "up" ? 1 : 0)
   const down = post.downvotes + (vote === "down" ? 1 : 0)
   const recasts = post.recasts + (recast ? 1 : 0)
-
-  const isVerifiedHolder = post.address?.toLowerCase().trim() === KNOWN_HOLDER_ADDRESS.trim();
-  const displayTier = (isVerifiedHolder || post.tier === "holder") ? "holder" : post.tier;
 
   return (
     <article className="border-b border-border px-4 py-4 transition-colors hover:bg-card/40">
@@ -38,7 +34,7 @@ export function PostCard({ post }: { post: Post }) {
             
             <div className="ml-auto flex items-center gap-2">
               <button className="text-xs text-primary font-bold hover:underline">Follow</button>
-              <TierBadge tier={displayTier} />
+              <TierBadge tier={post.tier} />
             </div>
           </div>
 
@@ -57,10 +53,24 @@ export function PostCard({ post }: { post: Post }) {
               <Repeat2 className="size-[18px]" />
               {formatCount(recasts)}
             </button>
-            <button onClick={() => alert("Comment feature active")} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm hover:text-blue-300">
+            <button onClick={() => setIsReplying(!isReplying)} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm hover:text-blue-300">
               <MessageCircle className="size-[18px]" />
             </button>
           </div>
+
+          {isReplying && (
+            <div className="mt-3 animate-in fade-in slide-in-from-top-1">
+              <textarea 
+                className="w-full bg-background border border-border rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="Write your reply..."
+                rows={2}
+              />
+              <div className="mt-2 flex justify-end gap-2">
+                <button onClick={() => setIsReplying(false)} className="px-3 py-1 text-xs hover:text-destructive"><X className="inline size-3" /> Cancel</button>
+                <button className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">Reply</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </article>
