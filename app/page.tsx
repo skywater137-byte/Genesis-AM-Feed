@@ -11,6 +11,8 @@ import { PostCard } from "@/components/genesis/post-card"
 import { useAccount, useReadContract } from "wagmi"
 import { erc20Abi } from "viem"
 
+export const dynamic = 'force-dynamic';
+
 export default function Page() {
   const { isConnected, address } = useAccount()
 
@@ -33,32 +35,28 @@ export default function Page() {
   const [feed, setFeed] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Load initial data
   useEffect(() => {
     const saved = localStorage.getItem("user-posts")
     if (saved) setUserPosts(JSON.parse(saved))
+    
+    async function loadFeed() {
+      try {
+        const res = await fetch("/api/feed", { cache: 'no-store' })
+        const data = (await res.json()) as { posts: Post[] }
+        setFeed(data.posts ?? [])
+      } catch {
+        setFeed([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadFeed()
   }, [])
 
   useEffect(() => {
     localStorage.setItem("user-posts", JSON.stringify(userPosts))
   }, [userPosts])
-
-  useEffect(() => {
-    let active = true
-    async function loadFeed() {
-      try {
-        const res = await fetch("/api/feed")
-        const data = (await res.json()) as { posts: Post[] }
-        if (!active) return
-        setFeed(data.posts ?? [])
-      } catch {
-        if (active) setFeed([])
-      } finally {
-        if (active) setLoading(false)
-      }
-    }
-    loadFeed()
-    return () => { active = false }
-  }, [])
 
   function handleBroadcast(text: string) {
     const post: Post = {

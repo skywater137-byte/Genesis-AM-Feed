@@ -16,19 +16,17 @@ export function PostCard({ post }: { post: Post }) {
   const [vote, setVote] = useState<"up" | "down" | null>(null)
   const [recast, setRecast] = useState(false)
   const [isReplying, setIsReplying] = useState(false)
-  const [replyText, setReplyText] = useState("") // New state for input
+  const [replyText, setReplyText] = useState("")
 
   const up = post.upvotes + (vote === "up" ? 1 : 0)
   const down = post.downvotes + (vote === "down" ? 1 : 0)
   const recasts = post.recasts + (recast ? 1 : 0)
 
-  // New handler function
   const handleReply = () => {
     if (!replyText.trim()) return
-    console.log(`Replying to ${post.id}:`, replyText)
     setReplyText("")
     setIsReplying(false)
-    alert("Reply submitted (Functionality for backend link coming next!)")
+    alert("Reply submitted")
   }
 
   return (
@@ -43,7 +41,6 @@ export function PostCard({ post }: { post: Post }) {
             <span className="font-mono text-xs text-muted-foreground">{post.address}</span>
             
             <div className="ml-auto flex items-center gap-2">
-              <button className="text-xs text-primary font-bold hover:underline">Follow</button>
               <TierBadge tier={post.tier} />
             </div>
           </div>
@@ -51,7 +48,6 @@ export function PostCard({ post }: { post: Post }) {
           <p className="mt-2 text-[15px] leading-relaxed text-foreground/90">{post.body}</p>
 
           <div className="mt-3 flex items-center gap-1 text-muted-foreground">
-            {/* ... (keep your existing vote and recast buttons here) */}
             <button onClick={() => setVote(vote === "up" ? null : "up")} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm hover:text-emerald-300">
               <ArrowBigUp className="size-[18px]" fill={vote === "up" ? "currentColor" : "none"} />
               {formatCount(up)}
@@ -70,7 +66,7 @@ export function PostCard({ post }: { post: Post }) {
           </div>
 
           {isReplying && (
-            <div className="mt-3 animate-in fade-in slide-in-from-top-1">
+            <div className="mt-3">
               <textarea 
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
@@ -80,10 +76,7 @@ export function PostCard({ post }: { post: Post }) {
               />
               <div className="mt-2 flex justify-end gap-2">
                 <button onClick={() => setIsReplying(false)} className="px-3 py-1 text-xs hover:text-destructive"><X className="inline size-3" /> Cancel</button>
-                <button 
-                  onClick={handleReply} 
-                  className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full"
-                >
+                <button onClick={handleReply} className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">
                   Reply
                 </button>
               </div>
