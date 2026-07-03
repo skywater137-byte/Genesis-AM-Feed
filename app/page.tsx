@@ -35,7 +35,6 @@ export default function Page() {
   const [feed, setFeed] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Load initial data
   useEffect(() => {
     const saved = localStorage.getItem("user-posts")
     if (saved) setUserPosts(JSON.parse(saved))
@@ -78,8 +77,31 @@ export default function Page() {
     setUserPosts((prev) => [post, ...prev])
   }
 
+  function handleReply(parentId: string, text: string) {
+    const replyPost: Post = {
+      id: `reply-${Date.now()}`,
+      handle: "@user_test",
+      address: address ?? "0x0000000000000000000000000000000000000000",
+      avatarColor: "oklch(0.66 0.16 200)",
+      chain: "base",
+      tier: hasToken ? "holder" : "non-holder",
+      timestamp: "now",
+      createdAt: Date.now(),
+      weight: 0,
+      body: text,
+      upvotes: 0,
+      downvotes: 0,
+      recast: false,
+      recasts: 0,
+      parentId: parentId,
+    }
+    setUserPosts((prev) => [replyPost, ...prev])
+  }
+
+  const allPosts = useMemo(() => [...feed, ...userPosts], [feed, userPosts])
+
   const posts = useMemo(() => {
-    let list = [...feed]
+    let list = [...allPosts]
     if (liveHoldersOnly && address) {
       list = list.filter((p) => p.address.toLowerCase() === address.toLowerCase())
     }
@@ -89,7 +111,10 @@ export default function Page() {
     }
     list.sort((a, b) => sort === "weighted" ? b.weight - a.weight : b.createdAt - a.createdAt)
     return list
-  }, [feed, query, sort, liveHoldersOnly, address])
+  }, [allPosts, query, sort, liveHoldersOnly, address])
+
+  // Get only top-level posts
+  const rootPosts = useMemo(() => posts.filter((p) => !p.parentId), [posts])
 
   return (
     <div className="min-h-dvh bg-background">
@@ -113,8 +138,16 @@ export default function Page() {
           </div>
         ) : hasToken ? (
           <ul>
-            {userPosts.map((post) => <li key={post.id}><PostCard post={post} /></li>)}
-            {posts.map((post) => <li key={post.id}><PostCard post={post} /></li>)}
+            {rootPosts.map((post) => (
+              <li key={post.id}>
+                <PostCard post={post} onReply={handleReply} />
+                {posts.filter(p => p.parentId === post.id).map(reply => (
+                  <div key={reply.id} className="ml-8 border-l-2 border-border/50">
+                    <PostCard post={reply} onReply={handleReply} />
+                  </div>
+                ))}
+              </li>
+            ))}
           </ul>
         ) : (
           <div className="px-4 py-16 text-center text-muted-foreground">

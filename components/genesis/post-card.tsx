@@ -12,7 +12,13 @@ function formatCount(n: number) {
   return `${n}`
 }
 
-export function PostCard({ post }: { post: Post }) {
+export function PostCard({ 
+  post, 
+  onReply 
+}: { 
+  post: Post; 
+  onReply: (parentId: string, text: string) => void 
+}) {
   const [vote, setVote] = useState<"up" | "down" | null>(null)
   const [recast, setRecast] = useState(false)
   const [isReplying, setIsReplying] = useState(false)
@@ -22,11 +28,11 @@ export function PostCard({ post }: { post: Post }) {
   const down = post.downvotes + (vote === "down" ? 1 : 0)
   const recasts = post.recasts + (recast ? 1 : 0)
 
-  const handleReply = () => {
+  const handleReplySubmit = () => {
     if (!replyText.trim()) return
+    onReply(post.id, replyText)
     setReplyText("")
     setIsReplying(false)
-    alert("Reply submitted")
   }
 
   return (
@@ -76,7 +82,7 @@ export function PostCard({ post }: { post: Post }) {
               />
               <div className="mt-2 flex justify-end gap-2">
                 <button onClick={() => setIsReplying(false)} className="px-3 py-1 text-xs hover:text-destructive"><X className="inline size-3" /> Cancel</button>
-                <button onClick={handleReply} className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">
+                <button onClick={handleReplySubmit} className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">
                   Reply
                 </button>
               </div>
