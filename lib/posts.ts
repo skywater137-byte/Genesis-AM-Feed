@@ -17,7 +17,7 @@ export type Post = {
   downvotes: number
   recasts: number
   recast: boolean
-  parentId?: string // Added to support threading
+  parentId?: string
 }
 
 export const POSTS: Post[] = [
