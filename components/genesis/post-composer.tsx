@@ -7,9 +7,11 @@ const MAX_CHARS = 280
 
 export function PostComposer({
   hasToken,
+  isConnected,
   onBroadcast,
 }: {
   hasToken: boolean
+  isConnected: boolean
   onBroadcast: (text: string) => void
 }) {
   const [text, setText] = useState("")
@@ -85,15 +87,12 @@ export function PostComposer({
       {/* The Gate overlay */}
       {!hasToken && (
         <div className="absolute inset-0 z-10 flex items-center justify-center p-4">
-          <div className="flex w-full max-w-md flex-col items-center rounded-2xl border border-border bg-card/90 px-6 py-6 text-center shadow-2xl backdrop-blur-md">
+          <div className="flex w-full max-w-lg flex-col items-center rounded-2xl border border-border bg-card/90 px-6 py-6 text-center shadow-2xl backdrop-blur-md">
             <span className="flex size-12 items-center justify-center rounded-full bg-amber-400/10 ring-1 ring-amber-400/30">
               <Lock className="size-6 text-amber-300" />
             </span>
             <p className="mt-3 text-sm font-semibold text-foreground">
-              {"\u{1F512} ACCESS DENIED: Genesis Key Required to Broadcast"}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground text-pretty">
-              Hold a Genesis Key on Base or Solana to unlock posting.
+              Genesis AM
             </p>
 
             <div ref={menuRef} className="relative mt-4 w-full">
@@ -102,10 +101,10 @@ export function PostComposer({
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-foreground px-4 py-2.5 text-sm font-bold text-background transition-transform hover:scale-[1.02]"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-foreground px-3 py-2.5 text-xs font-bold leading-snug text-background whitespace-normal transition-transform hover:scale-[1.02] sm:px-4 sm:text-sm"
               >
-                <Sparkles className="size-4" />
-                Acquire Genesis Key
+                <Sparkles className="size-4 shrink-0" />
+                Purchase Genesis AM Token (Base or Solana)
               </button>
 
               {menuOpen && (
@@ -142,6 +141,12 @@ export function PostComposer({
                 </div>
               )}
             </div>
+
+            <p className="mt-3 max-w-sm text-xs text-muted-foreground text-pretty">
+              {isConnected
+                ? "Purchase Genesis AM tokens to enter."
+                : "Connect to wallet holding Genesis AM tokens or purchase Genesis AM tokens to enter."}
+            </p>
           </div>
         </div>
       )}
