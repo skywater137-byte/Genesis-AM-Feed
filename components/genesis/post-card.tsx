@@ -58,7 +58,9 @@ export function PostCard({
   const [replyText, setReplyText] = useState("")
 
   const isReply = depth > 0
-  const showHolderBadge = post.tier !== "holder" || post.weight > 0
+  
+  // Clean, strict logic: only show holder badge if tier is genuinely "holder" or explicitly verified by weight/balance condition
+  const showHolderBadge = post.tier === "holder" || post.weight > 0
 
   const up = post.upvotes + (vote === "up" ? 1 : 0)
   const down = post.downvotes + (vote === "down" ? 1 : 0)
