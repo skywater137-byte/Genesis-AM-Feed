@@ -15,7 +15,30 @@ export const metadata: Metadata = {
   title: 'Genesis AM — Cross-Chain Feed',
   description:
     'A decentralized, cross-chain microblogging timeline for Genesis Key holders across Base and Solana.',
+  metadataBase: new URL('https://your-domain.xyz'), // Update with your actual production domain
   generator: 'v0.app',
+  openGraph: {
+    title: 'Genesis AM — Cross-Chain Feed',
+    description: 'A decentralized, cross-chain microblogging timeline for Genesis Key holders across Base and Solana.',
+    url: 'https://your-domain.xyz',
+    siteName: 'Genesis AM',
+    images: [
+      {
+        url: '/og-image.png', // Ensure a 1200x630px image is placed in your public folder
+        width: 1200,
+        height: 630,
+        alt: 'Genesis AM Cross-Chain Feed Preview',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Genesis AM — Cross-Chain Feed',
+    description: 'A decentralized, cross-chain microblogging timeline for Genesis Key holders across Base and Solana.',
+    images: ['/og-image.png'],
+  },
   icons: {
     icon: [
       {
