@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Loader2, EyeOff, RotateCcw, X } from "lucide-react"
 import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit"
-import { type Post } from "@/lib/posts"
+import { type Post, POSTS } from "@/lib/posts"
 import { Header } from "@/components/genesis/header"
 import {
   SubToolbar,
@@ -12,7 +12,10 @@ import {
 } from "@/components/genesis/sub-toolbar"
 import { PostComposer } from "@/components/genesis/post-composer"
 import { PostCard } from "@/components/genesis/post-card"
-import { ConnectBuyButton } from "@/components/genesis/connect-buy-button"
+import {
+  ConnectWalletButton,
+  WalletAuthActions,
+} from "@/components/genesis/connect-buy-button"
 import { useAccount, useReadContract } from "wagmi"
 import { erc20Abi } from "viem"
 
@@ -23,8 +26,76 @@ type BlocklistState = {
   blockedUsers: string[]
 }
 
-const LIVE_HOLDER_TIERS = new Set(["whale", "holder"])
-const ALUMNI_TIERS = new Set(["exited"])
+const LIVE_HOLDER_TIERS = new Set<Post["tier"]>(["whale", "holder"])
+const ALUMNI_TIERS = new Set<Post["tier"]>(["exited"])
+
+function isBlocked(
+  post: Post,
+  blockedPosts: string[],
+  blockedUsers: string[],
+) {
+  return (
+    blockedPosts.includes(post.id) ||
+    blockedUsers.includes(post.handle) ||
+    blockedUsers.includes(post.address)
+  )
+}
+
+/**
+ * Build an isolated feed for a segment from scratch (never mutate/bleed prior tab state).
+ * Root posts are filtered by segment; their full reply trees are always preserved
+ * so comments are not dropped when a child's tier differs from the parent's.
+ */
+function buildSegmentFeed(
+  source: Post[],
+  segment: FeedSegment,
+  blockedPosts: string[],
+  blockedUsers: string[],
+): Post[] {
+  const visible = source.filter(
+    (p) => !isBlocked(p, blockedPosts, blockedUsers),
+  )
+
+  // Always start from an empty result — no carry-over from other tabs.
+  const result: Post[] = []
+
+  const roots = visible.filter((p) => !p.parentId)
+
+  const matchingRoots =
+    segment === "general"
+      ? roots
+      : segment === "live-holders"
+        ? roots.filter((p) => LIVE_HOLDER_TIERS.has(p.tier))
+        : roots.filter((p) => ALUMNI_TIERS.has(p.tier))
+
+  if (matchingRoots.length === 0) {
+    return result
+  }
+
+  const allowedRootIds = new Set(matchingRoots.map((p) => p.id))
+
+  // Include every descendant of matching roots (breadth-first), regardless of child tier.
+  const included = new Set<string>(allowedRootIds)
+  let frontier = [...allowedRootIds]
+  while (frontier.length > 0) {
+    const next: string[] = []
+    for (const parentId of frontier) {
+      for (const p of visible) {
+        if (p.parentId === parentId && !included.has(p.id)) {
+          included.add(p.id)
+          next.push(p.id)
+        }
+      }
+    }
+    frontier = next
+  }
+
+  for (const p of visible) {
+    if (included.has(p.id)) result.push(p)
+  }
+
+  return result
+}
 
 function Thread({
   post,
@@ -39,6 +110,7 @@ function Thread({
   onHideUser,
   canInteract,
   onRequireConnect,
+  showTierBadges,
 }: {
   post: Post
   posts: Post[]
@@ -52,6 +124,7 @@ function Thread({
   onHideUser: (handle: string, address: string) => void
   canInteract: boolean
   onRequireConnect: () => void
+  showTierBadges: boolean
 }) {
   const children = posts.filter((p) => p.parentId === post.id)
   const isCollapsed = collapsedThreads.has(post.id)
@@ -75,6 +148,7 @@ function Thread({
           onHideUser={onHideUser}
           canInteract={canInteract}
           onRequireConnect={onRequireConnect}
+          showTierBadges={showTierBadges}
         />
       </div>
 
@@ -111,6 +185,7 @@ function Thread({
             onHideUser={onHideUser}
             canInteract={canInteract}
             onRequireConnect={onRequireConnect}
+            showTierBadges={showTierBadges}
           />
         ))}
     </div>
@@ -220,6 +295,11 @@ export default function Page() {
     if (hasToken) setShowConnectPrompt(false)
   }, [hasToken])
 
+  // Reset per-tab UI state so collapse/selection never bleeds across segments.
+  useEffect(() => {
+    setCollapsedThreads(new Set())
+  }, [segment])
+
   function requireConnect() {
     if (hasToken) return
     setShowConnectPrompt(true)
@@ -320,40 +400,70 @@ export default function Page() {
     })
   }
 
-  const allPosts = useMemo(() => [...feed, ...userPosts], [feed, userPosts])
+  const allPosts = useMemo(() => {
+    // Dedupe by id: live API + local user posts overlay the static seed.
+    // Seed posts (with reply threads) are always present so comments aren't
+    // wiped when the live feed response replaces the sample payload.
+    const byId = new Map<string, Post>()
+    for (const p of POSTS) byId.set(p.id, p)
+    for (const p of feed) byId.set(p.id, p)
+    for (const p of userPosts) byId.set(p.id, p)
+    return Array.from(byId.values())
+  }, [feed, userPosts])
 
+  // Per-segment isolated feed — rebuilt from scratch on every segment change.
   const posts = useMemo(() => {
-    let list = [...allPosts]
-
-    list = list.filter(
-      (p) =>
-        !blockedPosts.includes(p.id) &&
-        !blockedUsers.includes(p.handle) &&
-        !blockedUsers.includes(p.address),
-    )
-
-    if (segment === "live-holders") {
-      list = list.filter((p) => LIVE_HOLDER_TIERS.has(p.tier))
-    } else if (segment === "alumni") {
-      list = list.filter((p) => ALUMNI_TIERS.has(p.tier))
-    }
+    let list = buildSegmentFeed(allPosts, segment, blockedPosts, blockedUsers)
 
     if (query.trim()) {
       const q = query.toLowerCase().replace(/[^\w\s]/gi, "").trim()
-      list = list.filter((p) => {
+      // Keep a reply if it OR any ancestor root matches the query, so threads stay intact.
+      const matchedIds = new Set<string>()
+      for (const p of list) {
         const bodyClean = p.body.toLowerCase().replace(/[^\w\s]/gi, "")
         const handleClean = p.handle.toLowerCase().replace(/[^\w\s]/gi, "")
-        return bodyClean.includes(q) || handleClean.includes(q)
-      })
+        if (bodyClean.includes(q) || handleClean.includes(q)) {
+          matchedIds.add(p.id)
+        }
+      }
+      // Expand: if a root matches, keep whole thread; if a reply matches, keep its root + siblings in tree.
+      const byId = new Map(list.map((p) => [p.id, p]))
+      const keep = new Set<string>()
+      for (const id of matchedIds) {
+        let cur: Post | undefined = byId.get(id)
+        const chain: string[] = []
+        while (cur) {
+          chain.push(cur.id)
+          cur = cur.parentId ? byId.get(cur.parentId) : undefined
+        }
+        const rootId = chain[chain.length - 1]
+        // Include entire subtree under the matched root.
+        for (const p of list) {
+          if (p.id === rootId || p.parentId === rootId) keep.add(p.id)
+        }
+        // Also walk deeper descendants.
+        let grew = true
+        while (grew) {
+          grew = false
+          for (const p of list) {
+            if (p.parentId && keep.has(p.parentId) && !keep.has(p.id)) {
+              keep.add(p.id)
+              grew = true
+            }
+          }
+        }
+      }
+      list = list.filter((p) => keep.has(p.id))
     }
 
-    list.sort((a, b) =>
+    list = [...list].sort((a, b) =>
       sort === "weighted" ? b.weight - a.weight : b.createdAt - a.createdAt,
     )
     return list
   }, [allPosts, query, sort, segment, blockedPosts, blockedUsers])
 
   const rootPosts = useMemo(() => posts.filter((p) => !p.parentId), [posts])
+  const showTierBadges = segment !== "general"
 
   const segmentEmptyCopy: Record<FeedSegment, string> = {
     general: "No posts yet. Be the first to broadcast.",
@@ -378,7 +488,7 @@ export default function Page() {
           {isConnected ? (
             <ConnectButton />
           ) : (
-            <ConnectBuyButton className="inline-flex items-center justify-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-xs font-bold text-background transition-transform hover:scale-[1.02] sm:text-sm sm:px-4 sm:py-2" />
+            <ConnectWalletButton className="inline-flex items-center justify-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-xs font-bold text-background transition-transform hover:scale-[1.02] sm:text-sm sm:px-4 sm:py-2" />
           )}
         </div>
       </Header>
@@ -402,13 +512,13 @@ export default function Page() {
             >
               <X className="size-4" />
             </button>
-            <h3 className="text-lg font-bold pr-8">Connect & Buy on Base</h3>
+            <h3 className="text-lg font-bold pr-8">Join the feed</h3>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
               Browsing is public. Posting, replying, and other interactions
               require holding Genesis AM on Base.
             </p>
             <div className="mt-5">
-              <ConnectBuyButton fullWidth />
+              <WalletAuthActions showConnect={!isConnected} />
             </div>
           </div>
         </div>
@@ -509,7 +619,7 @@ export default function Page() {
               onClick={requireConnect}
               className="font-semibold text-primary hover:underline"
             >
-              Connect & Buy on Base
+              Connect to Wallet
             </button>
             .
           </div>
@@ -527,11 +637,11 @@ export default function Page() {
             <Loader2 className="size-6 animate-spin text-muted-foreground" />
           </div>
         ) : rootPosts.length === 0 ? (
-          <div className="px-4 py-16 text-center text-sm text-muted-foreground">
+          <div key={`empty-${segment}`} className="px-4 py-16 text-center text-sm text-muted-foreground">
             {segmentEmptyCopy[segment]}
           </div>
         ) : (
-          <ul>
+          <ul key={`feed-${segment}`}>
             {rootPosts.map((post) => (
               <li key={post.id}>
                 <Thread
@@ -546,6 +656,7 @@ export default function Page() {
                   onHideUser={handleHideUser}
                   canInteract={hasToken}
                   onRequireConnect={requireConnect}
+                  showTierBadges={showTierBadges}
                 />
               </li>
             ))}

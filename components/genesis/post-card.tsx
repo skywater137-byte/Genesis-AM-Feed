@@ -41,6 +41,7 @@ export function PostCard({
   onHideUser,
   canInteract = true,
   onRequireConnect,
+  showTierBadges = false,
 }: {
   post: Post
   onReply: (parentId: string, text: string) => void
@@ -55,6 +56,8 @@ export function PostCard({
   onHideUser?: (handle: string, address: string) => void
   canInteract?: boolean
   onRequireConnect?: () => void
+  /** Holder / whale / exited badges — only on Live Holders & Alumni. */
+  showTierBadges?: boolean
 }) {
   const [vote, setVote] = useState<"up" | "down" | null>(null)
   const [recast, setRecast] = useState(false)
@@ -62,9 +65,6 @@ export function PostCard({
   const [replyText, setReplyText] = useState("")
 
   const isReply = depth > 0
-
-  // Clean, strict logic: only show holder badge if tier is genuinely "holder" or explicitly verified by weight/balance condition
-  const showHolderBadge = post.tier === "holder" || post.weight > 0
 
   const up = post.upvotes + (vote === "up" ? 1 : 0)
   const down = post.downvotes + (vote === "down" ? 1 : 0)
@@ -133,7 +133,9 @@ export function PostCard({
                   Flagged
                 </span>
               )}
-              {showHolderBadge && <TierBadge tier={post.tier} />}
+              {showTierBadges && post.tier !== "non-holder" && (
+                <TierBadge tier={post.tier} />
+              )}
             </div>
           </div>
 

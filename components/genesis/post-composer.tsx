@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Lock, Sparkles } from "lucide-react"
-import { ConnectBuyButton } from "./connect-buy-button"
+import { WalletAuthActions } from "./connect-buy-button"
 
 const MAX_CHARS = 280
 
@@ -78,7 +78,7 @@ export function PostComposer({
         </div>
       </div>
 
-      {/* The Gate overlay — posting requires Connect & Buy on Base */}
+      {/* Gate overlay — connect holders vs purchase path */}
       {!hasToken && (
         <div className="absolute inset-0 z-10 flex items-center justify-center p-4">
           <div className="flex w-full max-w-lg flex-col items-center rounded-2xl border border-border bg-card/90 px-6 py-6 text-center shadow-2xl backdrop-blur-md">
@@ -88,20 +88,14 @@ export function PostComposer({
             <p className="mt-3 text-sm font-semibold text-foreground">
               Genesis AM
             </p>
-            <p className="mt-1 max-w-sm text-xs text-muted-foreground text-pretty">
+            <p className="mt-1 mb-4 max-w-sm text-xs text-muted-foreground text-pretty">
               Browse the public feed freely. Posting requires a Genesis AM key
               on Base.
             </p>
 
-            <div className="mt-4 w-full max-w-xs">
-              <ConnectBuyButton fullWidth />
+            <div className="w-full max-w-xs">
+              <WalletAuthActions showConnect={!isConnected} />
             </div>
-
-            <p className="mt-3 max-w-sm text-xs text-muted-foreground text-pretty">
-              {isConnected
-                ? "Purchase Genesis AM on Base to unlock broadcasting."
-                : "Connect your wallet on Base, then buy Genesis AM to enter."}
-            </p>
           </div>
         </div>
       )}
