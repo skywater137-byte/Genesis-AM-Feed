@@ -57,7 +57,6 @@ type NeynarAuthor = {
   custody_address?: string
   verified_addresses?: {
     eth_addresses?: string[]
-    sol_addresses?: string[]
   }
 }
 
@@ -74,10 +73,9 @@ function mapCast(cast: NeynarCast): Post {
   const author = cast.author ?? {}
   const handle = `@${author.username ?? "unknown"}`
   const eth = author.verified_addresses?.eth_addresses?.[0]
-  const sol = author.verified_addresses?.sol_addresses?.[0]
-  // Solana users get the purple→green chain dot; everyone else maps to Base.
-  const chain: Chain = !eth && sol ? "solana" : "base"
-  const address = shorten(eth ?? sol ?? author.custody_address ?? "")
+  // Genesis AM is Base-native — always map casts to the Base chain badge.
+  const chain: Chain = "base"
+  const address = shorten(eth ?? author.custody_address ?? "")
   const likes = cast.reactions?.likes_count ?? 0
   const recasts = cast.reactions?.recasts_count ?? 0
   const createdAt = new Date(cast.timestamp).getTime() || Date.now()

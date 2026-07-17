@@ -4,20 +4,27 @@ import { useEffect, useRef, useState } from "react"
 import { Check, ChevronDown } from "lucide-react"
 
 export type SortKey = "weighted" | "recent"
+export type FeedSegment = "general" | "live-holders" | "alumni"
 
 const SORT_LABELS: Record<SortKey, string> = {
   weighted: "Top Weighted",
   recent: "Most Recent",
 }
 
+const SEGMENTS: { id: FeedSegment; label: string; hint: string }[] = [
+  { id: "general", label: "General", hint: "Public discovery feed" },
+  { id: "live-holders", label: "Live Holders", hint: "Current token holders" },
+  { id: "alumni", label: "Alumni", hint: "Past holders & legacy" },
+]
+
 export function SubToolbar({
-  liveHoldersOnly,
-  onToggleLiveHolders,
+  segment,
+  onSegmentChange,
   sort,
   onSortChange,
 }: {
-  liveHoldersOnly: boolean
-  onToggleLiveHolders: (v: boolean) => void
+  segment: FeedSegment
+  onSegmentChange: (s: FeedSegment) => void
   sort: SortKey
   onSortChange: (s: SortKey) => void
 }) {
@@ -37,35 +44,37 @@ export function SubToolbar({
 
   return (
     <div className="sticky top-[57px] z-20 border-b border-border bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-2.5">
-        {/* Live Holders toggle */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={liveHoldersOnly}
-          onClick={() => onToggleLiveHolders(!liveHoldersOnly)}
-          className="flex items-center gap-2.5"
+      <div className="mx-auto flex max-w-2xl flex-col gap-2.5 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+        {/* Three-way segmented feed control */}
+        <div
+          role="tablist"
+          aria-label="Feed segment"
+          className="inline-flex w-full rounded-full border border-border bg-muted/40 p-1 sm:w-auto"
         >
-          <span
-            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-              liveHoldersOnly
-                ? "bg-emerald-500 shadow-[0_0_12px_-1px_rgba(16,185,129,0.8)]"
-                : "bg-muted"
-            }`}
-          >
-            <span
-              className={`inline-block size-4 rounded-full bg-white shadow transition-transform ${
-                liveHoldersOnly ? "translate-x-4" : "translate-x-0.5"
-              }`}
-            />
-          </span>
-          <span className="text-sm font-medium text-foreground">
-            Live Holders Only
-          </span>
-        </button>
+          {SEGMENTS.map((s) => {
+            const active = segment === s.id
+            return (
+              <button
+                key={s.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                title={s.hint}
+                onClick={() => onSegmentChange(s.id)}
+                className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:flex-none sm:px-3.5 sm:text-sm ${
+                  active
+                    ? "bg-card text-foreground shadow-sm ring-1 ring-border"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {s.label}
+              </button>
+            )
+          })}
+        </div>
 
         {/* Sort dropdown */}
-        <div ref={ref} className="relative">
+        <div ref={ref} className="relative self-end sm:self-auto">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}

@@ -39,6 +39,8 @@ export function PostCard({
   onSuspectBot,
   onHidePost,
   onHideUser,
+  canInteract = true,
+  onRequireConnect,
 }: {
   post: Post
   onReply: (parentId: string, text: string) => void
@@ -51,6 +53,8 @@ export function PostCard({
   onSuspectBot?: (postId: string) => void
   onHidePost?: (postId: string) => void
   onHideUser?: (handle: string, address: string) => void
+  canInteract?: boolean
+  onRequireConnect?: () => void
 }) {
   const [vote, setVote] = useState<"up" | "down" | null>(null)
   const [recast, setRecast] = useState(false)
@@ -58,7 +62,7 @@ export function PostCard({
   const [replyText, setReplyText] = useState("")
 
   const isReply = depth > 0
-  
+
   // Clean, strict logic: only show holder badge if tier is genuinely "holder" or explicitly verified by weight/balance condition
   const showHolderBadge = post.tier === "holder" || post.weight > 0
 
@@ -66,7 +70,19 @@ export function PostCard({
   const down = post.downvotes + (vote === "down" ? 1 : 0)
   const recasts = post.recasts + (recast ? 1 : 0)
 
+  function guardInteract(action: () => void) {
+    if (!canInteract) {
+      onRequireConnect?.()
+      return
+    }
+    action()
+  }
+
   const handleReplySubmit = () => {
+    if (!canInteract) {
+      onRequireConnect?.()
+      return
+    }
     const trimmed = replyText.trim()
     if (!trimmed) return
     onReply(post.id, trimmed)
@@ -148,7 +164,9 @@ export function PostCard({
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
             <button
               type="button"
-              onClick={() => setVote(vote === "up" ? null : "up")}
+              onClick={() =>
+                guardInteract(() => setVote(vote === "up" ? null : "up"))
+              }
               className={cn(
                 actionBtnBase,
                 vote === "up" && "border-emerald-400/40 bg-emerald-400/10 text-emerald-300",
@@ -162,7 +180,9 @@ export function PostCard({
             </button>
             <button
               type="button"
-              onClick={() => setVote(vote === "down" ? null : "down")}
+              onClick={() =>
+                guardInteract(() => setVote(vote === "down" ? null : "down"))
+              }
               className={cn(
                 actionBtnBase,
                 vote === "down" && "border-destructive/40 bg-destructive/10 text-destructive",
@@ -176,7 +196,7 @@ export function PostCard({
             </button>
             <button
               type="button"
-              onClick={() => setRecast((r) => !r)}
+              onClick={() => guardInteract(() => setRecast((r) => !r))}
               className={cn(
                 actionBtnBase,
                 recast && "border-primary/40 bg-primary/10 text-primary",
@@ -187,7 +207,9 @@ export function PostCard({
             </button>
             <button
               type="button"
-              onClick={() => setIsReplying(!isReplying)}
+              onClick={() =>
+                guardInteract(() => setIsReplying(!isReplying))
+              }
               className={cn(
                 actionBtnBase,
                 isReplying && "border-blue-400/40 bg-blue-400/10 text-blue-300",

@@ -12,14 +12,15 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Genesis AM — Cross-Chain Feed',
+  title: 'Genesis AM — Base Feed',
   description:
-    'A decentralized, cross-chain microblogging timeline for Genesis Key holders across Base and Solana.',
+    'A decentralized microblogging timeline for Genesis Key holders on Base. Public discovery feed with holder-gated posting.',
   metadataBase: new URL('https://your-domain.xyz'), // Update with your actual production domain
   generator: 'v0.app',
   openGraph: {
-    title: 'Genesis AM — Cross-Chain Feed',
-    description: 'A decentralized, cross-chain microblogging timeline for Genesis Key holders across Base and Solana.',
+    title: 'Genesis AM — Base Feed',
+    description:
+      'A decentralized microblogging timeline for Genesis Key holders on Base. Public discovery feed with holder-gated posting.',
     url: 'https://your-domain.xyz',
     siteName: 'Genesis AM',
     images: [
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
         url: '/og-image.png', // Ensure a 1200x630px image is placed in your public folder
         width: 1200,
         height: 630,
-        alt: 'Genesis AM Cross-Chain Feed Preview',
+        alt: 'Genesis AM Base Feed Preview',
       },
     ],
     locale: 'en_US',
@@ -35,8 +36,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Genesis AM — Cross-Chain Feed',
-    description: 'A decentralized, cross-chain microblogging timeline for Genesis Key holders across Base and Solana.',
+    title: 'Genesis AM — Base Feed',
+    description:
+      'A decentralized microblogging timeline for Genesis Key holders on Base. Public discovery feed with holder-gated posting.',
     images: ['/og-image.png'],
   },
   icons: {
