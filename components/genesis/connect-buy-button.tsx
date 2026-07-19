@@ -3,13 +3,13 @@
 import { ExternalLink, Wallet } from "lucide-react"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useAccount } from "wagmi"
-
-/** Uniswap Base swap deep-link (token address can be swapped later). */
-export const BASE_BUY_URL =
-  "https://app.uniswap.org/swap?chain=base&inputCurrency=ETH&outputCurrency=0x85d809585BFE271c73a9AAEfeCF0be1204FDB2fd"
+import { getUniswapSwapUrl } from "@/lib/tokens"
 
 export const CONNECT_LABEL = "Connect to Wallet"
 export const BUY_LABEL = "Purchase Genesis AM on Base"
+
+/** @deprecated Use getUniswapSwapUrl() from @/lib/tokens */
+export const BASE_BUY_URL = getUniswapSwapUrl()
 
 const primaryBtn =
   "inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-4 py-2.5 text-sm font-bold text-background transition-transform hover:scale-[1.02] disabled:opacity-50"
@@ -65,7 +65,7 @@ export function ConnectWalletButton({
   )
 }
 
-/** Secondary purchase CTA — Uniswap on Base. */
+/** Secondary purchase CTA — Uniswap on Base (active token). */
 export function BuyOnBaseButton({
   className,
   fullWidth = false,
@@ -75,7 +75,7 @@ export function BuyOnBaseButton({
 }) {
   return (
     <a
-      href={BASE_BUY_URL}
+      href={getUniswapSwapUrl()}
       target="_blank"
       rel="noopener noreferrer"
       className={`${className ?? secondaryBtn} ${fullWidth ? "w-full" : ""}`}

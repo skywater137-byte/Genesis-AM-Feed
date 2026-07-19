@@ -13,7 +13,7 @@ export function Header({
   children?: ReactNode
 }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-9 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
         <h1 className="shrink-0 text-base font-bold tracking-tight text-foreground sm:text-lg">
           Genesis

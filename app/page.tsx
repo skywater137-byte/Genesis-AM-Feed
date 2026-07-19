@@ -16,6 +16,9 @@ import {
   ConnectWalletButton,
   WalletAuthActions,
 } from "@/components/genesis/connect-buy-button"
+import { PriceHeader } from "@/components/genesis/price-header"
+import { TradeFab } from "@/components/genesis/trade-fab"
+import { ACTIVE_TOKEN } from "@/lib/tokens"
 import { useAccount, useReadContract } from "wagmi"
 import { erc20Abi } from "viem"
 
@@ -196,10 +199,8 @@ export default function Page() {
   const { isConnected, address } = useAccount()
   const { openConnectModal } = useConnectModal()
 
-  const TOKEN_CONTRACT = "0x85d809585BFE271c73a9AAEfeCF0be1204FDB2fd"
-
   const { data: balance } = useReadContract({
-    address: TOKEN_CONTRACT as `0x${string}`,
+    address: ACTIVE_TOKEN.address,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address as `0x${string}`] : undefined,
@@ -207,7 +208,9 @@ export default function Page() {
   })
 
   const hasToken =
-    isConnected && balance !== undefined && balance >= BigInt(5 * 10 ** 18)
+    isConnected &&
+    balance !== undefined &&
+    balance >= ACTIVE_TOKEN.minHoldRaw
 
   const [query, setQuery] = useState("")
   const [segment, setSegment] = useState<FeedSegment>("general")
@@ -473,6 +476,8 @@ export default function Page() {
 
   return (
     <div className="min-h-dvh bg-background">
+      <PriceHeader />
+
       <Header query={query} onQueryChange={setQuery}>
         <div className="flex items-center gap-2">
           <button
@@ -672,6 +677,8 @@ export default function Page() {
           </p>
         </footer>
       </main>
+
+      <TradeFab />
     </div>
   )
 }

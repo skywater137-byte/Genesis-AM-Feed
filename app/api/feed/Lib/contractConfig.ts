@@ -1,9 +1,10 @@
-import { erc20Abi } from 'viem';
+import { erc20Abi } from "viem"
+import { ACTIVE_TOKEN } from "@/lib/tokens"
 
-// IMPORTANT: Replace this with the address from your Hardhat deployment log
-export const GENAM_CONTRACT_ADDRESS = '0x85d809585bfe271c73a9aaefecf0be1204fdb2fd'; 
+/** @deprecated Prefer ACTIVE_TOKEN from @/lib/tokens — kept for existing imports. */
+export const GENAM_CONTRACT_ADDRESS = ACTIVE_TOKEN.address
 
 export const contractConfig = {
-  address: GENAM_CONTRACT_ADDRESS as `0x${string}`,
+  address: ACTIVE_TOKEN.address,
   abi: erc20Abi,
-} as const;
+} as const

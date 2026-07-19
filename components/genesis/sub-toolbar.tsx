@@ -43,7 +43,7 @@ export function SubToolbar({
   }, [open])
 
   return (
-    <div className="sticky top-[57px] z-20 border-b border-border bg-background/80 backdrop-blur-xl">
+    <div className="sticky top-[93px] z-20 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-2xl flex-col gap-2.5 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
         {/* Three-way segmented feed control */}
         <div
